@@ -1,13 +1,35 @@
 # README for Zillow Clustering Project
 
-## Questions and Goals
+<hr style="border-top: 10px groove #1277e1; margin-top: 1px; margin-bottom: 1px"></hr>
 
-### Initial Ideas and Hypotheses
+## Project Goals and Ideas
+### The Big Question: What is driving the errors in the Zestimates?
+
+For this project the target is `logerror`
+
+#### Goal: Identify Drivers of Error and Create model(s) that account for those drivers.
+
+#### Initial Thoughts and Hypotheses
+- After only looking at size (bedroom count, bathroom count and square footage for the house itself) model was not great
+- Location is very important in real estate. As they say Location Location Location
+    - Use Latitude and Longitude to narrow down groups
+    - Create clusters of error based on location
+    - if that doesn't work, try to use location data and price to create neighborhood clusters  
+- Price per square foot is something lots of realtors use for comparing houses that aren't the same size 
+    - Create engineered feature, `ppsqft` divide `taxvalue` / `calculatedsquarefeet` 
+- Age of home is important when comparing houses, realtors will compare houses built before 1978, between 1798-2000 and post 2000
+    - Create engineered feature age, based on year built
+    - Create three bins
+- Related to size of home, homes typically get compared with other homes within a 400sqft variance. Possibility here to create size clusters based on `calculatedsquarefeet`, or `ppsft`, or `lotsize`
+
+<hr style="border-top: 10px groove #1277e1; margin-top: 1px; margin-bottom: 1px"></hr>
 
 ## About the Data
 - The data in this project comes from the Zillow data prize competition in 2017.
 
 ### Data Dictionary
+
+<hr style="border-top: 10px groove #1277e1; margin-top: 1px; margin-bottom: 1px"></hr>
 
 ## Plan and Process
 - Trello Board (insert link here)
