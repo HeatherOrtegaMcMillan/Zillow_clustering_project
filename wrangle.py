@@ -337,6 +337,16 @@ def drop_rows_low_percent(df):
 
 #########################
 
+def absolute_logerror(df):
+    '''
+    This function takes in the dataframe and returns the df with new column abs_logerror
+    '''
+    df['abs_logerror'] = df['logerror'].abs()
+    
+    return df
+
+#########################
+
 
 def banana_split(df):
     '''
@@ -377,9 +387,11 @@ def wrangle_zillow():
 
     df = cali_counties(df)
 
+    df = absolute_logerror(df)
+
     df = drop_zillow_outliers(df)
 
-    df = remove_outliers(df, 3, col_list = ['lotsizesquarefeet', 'regionidcity'])
+    #df = remove_outliers(df, 3, col_list = ['calculatedfinishedsquarefeet', 'taxamount'])
 
     df = drop_unneeded_cols(df)
 
@@ -387,3 +399,46 @@ def wrangle_zillow():
 
     return df
 #########################
+
+
+def my_scaler(train, validate, test, col_names, scaler, scaler_name):
+    
+    '''
+    This function takes in the train validate and test dataframes, columns you want to scale (as a list), a scaler (i.e. MinMaxScaler(), with whatever paramaters you need),
+    scaler_name as a string.
+    col_names: list of columns to scale
+    Scaler_name, should be what you want in the name of your new dataframe columns.
+    Adds columns to the train validate and test dataframes. 
+    Outputs scaler for doing inverse transforms.
+    Ouputs a list of the new column names (what you can use to create the X_train).
+    
+    example: min_max_scaler, scaled_cols_list = my_scaler(train, validate, test, MinMaxScaler(), 'scaled_min_max')
+    
+    '''
+    
+    #create the scaler (input here should be minmax scaler)
+    mm_scaler = scaler
+    
+    # make empty list for return
+    scaled_cols_list = []
+    
+    # loop through columns in col names
+    for col in col_names:
+        
+        #fit and transform to train, add to new column on train df
+        train[f'{col}_{scaler_name}'] = mm_scaler.fit_transform(train[[col]]) 
+        
+        #df['col'].values.reshape(-1, 1)
+        
+        #transform cols from validate and test (only fit on train)
+        validate[f'{col}_{scaler_name}']= mm_scaler.transform(validate[[col]])
+        test[f'{col}_{scaler_name}']= mm_scaler.transform(test[[col]])
+        
+        #add new column name to the list that will get returned
+        scaled_cols_list.append(f'{col}_{scaler_name}')
+    
+    #confirmation print
+    print('Your scaled columns have been added to your train validate and test dataframes.')
+    
+    #returns scaler, and a list of column names that can be used in X_train, X_validate and X_test.
+    return scaler, scaled_cols_list  
