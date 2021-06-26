@@ -7,113 +7,6 @@ from sklearn.metrics import r2_score, mean_squared_error
 from sklearn.linear_model import LinearRegression
 from sklearn.feature_selection import SelectKBest, f_regression, RFE
 
-################################################################################################
-def sse_compare(sse1, sse2, model1, model2 = 'baseline'):
-    '''
-    sse1 must be for model 1
-    sse2, must be for model 2 (which is by default the baseline)
-    model1 = string name of the model you're comparing
-    This function compares two SSEs. and outputs which one performed better
-    '''
-    
-    if sse1 > sse2:
-        print(f'{model1} is not better than {model2}.')
-    elif sse1 < sse2:
-        print(f'{model1} is better than {model2}. Difference: {sse2 - sse1:.2f}')
-    else:
-        print(f'{model1} performs the same as {model2}')
-
-################################################################################################
-def plot_residuals(df, x_list, palette = "tab10"):
-    '''
-    This function takes in a dataframe and a list of all the risiduals you would like to plot (that means the names of the columns)
-    '''
-    color_list= list(sns.color_palette(palette))
-    fig, ax = plt.subplots(figsize=(10, 5))
-    for x, c in zip(x_list, color_list):
-        sns.histplot(x = x, data = df, kde=True, ax = ax, alpha = 0.5, color = c, legend=True, lw = .1)
-    
-    plt.legend(x_list)  
-    plt.show()
-
-################################################################################################
-
-def hip_to_be_square(y, yhat, print_out = False):
-    '''
-    This function takes the actuals (y), 
-    and the predictions (yhat).
-    optional arguement print_out. bool. when set to True will print out summary
-    It prints out the Sum of SE, Mean SE, Root Mean SE, Explained SS, and Total SS. 
-    Returns them in 5 variables. In order listed above
-    ex: sse, mse, rmse, ess, tss = hip_to_be_square(df, 'actuals', 'yhat', print_out = True)
-    '''
-    # calculate Sum of Squared Error
-    sse = ((y - yhat) ** 2).sum()
-    
-    # calculate Mean of Squared Error
-    mse = sse / y.shape[0]
-    
-    # calculate Root Mean of Squared Error
-    rmse = mse ** .5
-    
-    # calculate Explained Sum of Squares 
-    ess = ((yhat - y.mean()) ** 2).sum()
-    
-    # calculate Total Sum of Squares
-    tss = ((y - y.mean()) ** 2).sum()
-    
-    if print_out == True:
-        
-        print(f'''
-            The Sum of Squared Error: {sse:.2f}
-            The Mean Squared Error: {mse:.2f}
-            The Root Mean Squared error: {rmse:.2f}
-            -----------------------------------
-            The Mean Explained Sum of Squares: {ess:.2f}
-            The Total Sum of Squares: {tss:.2f}
-            ''')
-    return sse, mse, rmse, ess, tss
-
-################################################################################################
-def baseline_mean_errors(y):
-    '''
-    This function takes in the actuals (y). Computes the baseline model. 
-    Returns the SSE, MSE, and RMSE for the baseline
-    '''
-    baseline = y.mean()
-    
-    # calculate Sum of Squared Error
-    sse = ((y - baseline) ** 2).sum()
-    
-    # calculate Mean of Squared Error
-    mse = sse / y.shape[0]
-    
-    # calculate Root Mean of Squared Error
-    rmse = mse ** .5
-    
-    return sse, mse, rmse
-
-################################################################################################
-
-def better_than_baseline(y, yhat):
-    '''
-    This function takes in actuals (y) and predictions (yhat) 
-    and returns true if the model performs better than baseline. 
-    '''
-    # calculate values for baseline
-    sse_b, mse_b, rmse_b = baseline_mean_errors(y)
-    
-    # calculate values for model
-    sse, mse, rmse_model, ess, tss = hip_to_be_square(y, yhat, print_out=False)
-    
-    # compare rmse from baseline and model
-    
-    # If Root Mean Square Error is smaller for the model than for the baseline, model is better, return True
-    if rmse_model < rmse_b:
-        return True
-    # if Root mean Square error for the model is larger or the same as the baseline, return False 
-    else:
-        return False
 
 ################################################################################################
 
@@ -156,6 +49,104 @@ def rfe(X, y, n, estimator=LinearRegression()):
 
 ################################################################################################
 
+# create basline 
+def get_mean_baseline(train, validate, test):
+    '''
+    function takes in train validate test.
+    Adds column with the baseline predictions based on the mean of train to each dataframe.
+    returns train, validate, test
+    '''
+    train['baseline'] = train.abs_logerror.mean()
+    validate['baseline'] = train.abs_logerror.mean()
+    test['baseline'] = train.abs_logerror.mean()
+    
+    return train, validate, test
+
+################################################################################################
+
+def compare_rmse(df_pred_actuals):
+    '''
+    This function takes in a list of tuples ex 
+    [('df_name', df.pred1, df.actuals), 
+    ('df_name2', df.pred2, y_validate)]
+    unpacks the tuple, and prints out the Root Mean Squared Error for each
+    First arguement of the tuple should be the dataframe name i.e. train or validate AS A STRING
+    '''
+    for df_name, prediction, actual in df_pred_actuals:
+        
+        rmse = mean_squared_error(prediction, actual, squared = False)
+               
+        print(f'{df_name} RMSE for {prediction.name}: {rmse} ')
+
+
+################################################################################################
+
+# this function has some issues 
+def regression_modeler_for_validating(X_cols, cols, train, validate, model= LinearRegression(), model_name = 'model'):
+    '''
+    This function creates regression model 
+    Takes in X_train, y_train, the model with the parameters you want (default is LinearRegression())
+    The name of your model as a string (for naming your column)
+    '''
+    
+    #fit model
+    model.fit(train[X_cols], train[y_col])
+    
+    #put predictions in train dataframe
+    train[model_name] = model.predict(train[X_cols])
+    
+    #put predictions in validate dataframe
+    validate[model_name] = model.predict(validate[X_cols])
+    
+    #print confirmation instead of returning something
+    print(f'{model_name} has been created and added to train and validate dataframes\n')
+    
+    # compare the RMSEs (this function prints out RMSE comparisons 
+    compare_rmse([('train', train[model_name], train[y_col]), ('validate', validate[model_name], validate[y_col])])
+    
+################################################################################################
+    
+def compare_to_basline(df, actuals, model_name, baseline = 'baseline'):
+    '''
+    this function takes in a dataframe (i.e. train)
+    the actuals (i.e. y_train)
+    the name of the column where your model's predictions are in the dataframe
+    baseline = name of the column where your baseline predictions are stored, 
+    default is 'baseline'
+    function prints out the RMSE for the df predictions, baseline, and whether or not 
+    it is better than the baseline
+    '''
+    # get name of dataframe entered
+    name =[x for x in globals() if globals()[x] is df][0]
+    
+    # calculate model RMSE
+    rmse = mean_squared_error(df[model_name], actuals, squared = False)
+    
+    # calculate baseline RMSE 
+    rmse_b = mean_squared_error(df[baseline], actuals, squared = False)
+    
+    # print it all out
+    print(f'''------- {name} ---------\n
+RMSE for {model_name}: {rmse}\n
+RMSE for baseline: {rmse_b}\n
+Better than baseline?: {rmse < rmse_b}
+        ''')
+################################################################################################
+
+# Create function to do seperate dataframes for old and new
+def old_new(df):
+    '''
+    '''
+    # old
+    df_old = df[df['built_before_1978'] == 1]
+    
+    # new
+    df_new = df[df['built_before_1978'] == 0]
+    
+    return df_old, df_new
+
+################################################################################################
+
 # maybe in the future add creating the preditions and the residuals if none were entered 
 # have to import sklearn stuff
 
@@ -187,6 +178,21 @@ def plot_the_dots(actuals, predictions, residuals):
     ax.set(title = 'Actual vs Residual',ylabel='Residual', xlabel='Actual')
     ax.hlines(0, *ax.get_xlim(), ls=':', color='gray')
     ax.text(text_loc, -3, f'RMSE: {rmse:.2f}')
+
+
+################################################################################################
+
+def plot_residuals(df, x_list, palette = "tab10"):
+    '''
+    This function takes in a dataframe and a list of all the risiduals you would like to plot (that means the names of the columns)
+    '''
+    color_list= list(sns.color_palette(palette))
+    fig, ax = plt.subplots(figsize=(10, 5))
+    for x, c in zip(x_list, color_list):
+        sns.histplot(x = x, data = df, kde=True, ax = ax, alpha = 0.5, color = c, legend=True, lw = .1)
+    
+    plt.legend(x_list)  
+    plt.show()
 
 #####################################Compare RMSE function##########################################
 
