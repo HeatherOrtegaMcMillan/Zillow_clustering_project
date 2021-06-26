@@ -347,28 +347,6 @@ def absolute_logerror(df):
 
 #########################
 
-
-def banana_split(df):
-    '''
-    args: df
-    This function take in the telco_churn data data acquired by aquire.py, get_telco_data(),
-    performs a split.
-    Returns train, validate, and test dfs.
-    '''
-    train_validate, test = train_test_split(df, test_size=.2, 
-                                        random_state=713)
-    train, validate = train_test_split(train_validate, test_size=.3, 
-                                   random_state=713)
-    print(f'train --> {train.shape}')
-    print(f'validate --> {validate.shape}')
-    print(f'test --> {test.shape}')
-    return train, validate, test
-
-    
-
-
-#########################
-
 def wrangle_zillow():
 
     df = get_zillow_data()
@@ -398,6 +376,7 @@ def wrangle_zillow():
     df = drop_rows_low_percent(df)
 
     return df
+
 #########################
 
 
@@ -442,3 +421,191 @@ def my_scaler(train, validate, test, col_names, scaler, scaler_name):
     
     #returns scaler, and a list of column names that can be used in X_train, X_validate and X_test.
     return scaler, scaled_cols_list  
+
+
+######################### the train validate test splitter 
+
+
+def banana_split(df):
+    '''
+    args: df
+    This function take in the telco_churn data data acquired by aquire.py, get_telco_data(),
+    performs a split.
+    Returns train, validate, and test dfs.
+    '''
+    train_validate, test = train_test_split(df, test_size=.2, 
+                                        random_state=713)
+    train, validate = train_test_split(train_validate, test_size=.3, 
+                                   random_state=713)
+    print(f'train --> {train.shape}')
+    print(f'validate --> {validate.shape}')
+    print(f'test --> {test.shape}')
+    return train, validate, test
+
+
+######################### an X_df and y_df splitter
+
+def all_aboard_the_X_train(X_cols, y_col, train, validate, test):
+    '''
+    X_cols = list of column names you want as your features
+    y_col = string that is the name of your target column
+    train = the name of your train dataframe
+    validate = the name of your validate dataframe
+    test = the name of your test dataframe
+    outputs X_train and y_train, X_validate and y_validate, and X_test and y_test
+    6 variables come out! So have that ready
+    '''
+    
+    # do the capital X lowercase y thing for train test and split
+    # X is the data frame of the features, y is a series of the target
+    X_train, y_train = train[X_cols], train[y_col]
+    X_validate, y_validate = validate[X_cols], validate[y_col]
+    X_test, y_test = test[X_cols], test[y_col]
+    
+    return X_train, y_train, X_validate, y_validate, X_test, y_test
+
+
+
+#########################
+
+def get_zillow_dummies(train, validate, test, cat_vars = ['yearbuilt_bins', 'county', 'clusters_locationprice']):
+    '''
+    Function takes in train, validate and test and a list of columns to be turned into dummies (cat_vars)
+    default col_list is for zillow 
+    '''
+    # create dummies 
+    train = pd.get_dummies(data = train, columns = cat_vars, drop_first=False)
+    validate = pd.get_dummies(data = validate, columns = cat_vars, drop_first=False)
+    test = pd.get_dummies(data = test, columns = cat_vars, drop_first=False)
+
+
+    # drop columns I don't want (specified above)
+    train = train.drop(columns=['yearbuilt_bins_(1978.0, 2000.0]', 'county_Ventura', 'clusters_locationprice_0'])
+    validate = validate.drop(columns=['yearbuilt_bins_(1978.0, 2000.0]', 'county_Ventura', 'clusters_locationprice_0'])
+    test = test.drop(columns=['yearbuilt_bins_(1978.0, 2000.0]', 'county_Ventura', 'clusters_locationprice_0'])
+    
+    # rename age bins because they have a dumb name
+    train = train.rename(columns={'yearbuilt_bins_(1878.0, 1978.0]': 'built_before_1978', 
+                                  'yearbuilt_bins_(2000.0, 2016.0]': 'built_after_2000'})
+    validate = validate.rename(columns={'yearbuilt_bins_(1878.0, 1978.0]': 'built_before_1978', 
+                                  'yearbuilt_bins_(2000.0, 2016.0]': 'built_after_2000'})
+    test = test.rename(columns={'yearbuilt_bins_(1878.0, 1978.0]': 'built_before_1978', 
+                                  'yearbuilt_bins_(2000.0, 2016.0]': 'built_after_2000'})
+    
+    return train, validate, test
+
+
+
+######################### 
+
+
+def my_scaler2(train, validate, test, col_names, scaler):
+    
+    '''
+    This function takes in the train validate and test dataframes, columns you want to scale (as a list), 
+    a scaler (i.e. MinMaxScaler(), with whatever paramaters you need),
+    col_names: list of columns to scale
+    Replaces unscaled cloumns with scaled columns 
+    Outputs scaler for doing inverse transforms.
+    
+    '''
+    
+    #create the scaler (input here should be minmax scaler)
+    mm_scaler = scaler
+    
+    # loop through columns in col names
+    for col in col_names:
+        
+        #fit and transform to train, add to new column on train df
+        train[f'{col}'] = mm_scaler.fit_transform(train[[col]]) 
+        
+        #df['col'].values.reshape(-1, 1)
+        
+        #transform cols from validate and test (only fit on train)
+        validate[f'{col}']= mm_scaler.transform(validate[[col]])
+        test[f'{col}']= mm_scaler.transform(test[[col]])
+
+    
+    #returns scaler, and a list of column names that can be used in X_train, X_validate and X_test.
+    return train, validate, test, scaler 
+
+
+#########################
+
+def make_this_cluster(train, validate, test, col_list, k, col_name = None):
+    '''
+    Function takes in already scaled train validate and test,
+    k number of clusters you want to make,
+    col_list list of the columns you want to be in the cluster
+    Optional argument col_name, If none is entered column returned is 'clusters'
+    Returns dataframes with column attached, and the kmeans object
+    Returns: train, validate, test, kmeans
+    '''
+    
+    #make thing
+    kmeans = KMeans(n_clusters=k, random_state=713)
+
+    #Fit Thing
+    kmeans.fit(train[col_list])
+    
+    if col_name == None:
+        # add cluster predictions on dataframe generic
+        train['clusters'] = kmeans.predict(train[col_list])
+        validate['clusters'] = kmeans.predict(validate[col_list])
+        test['clusters'] = kmeans.predict(test[col_list])
+    else:
+        # add cluster predictions on dataframe specific name
+        train[col_name] = kmeans.predict(train[col_list])
+        validate[col_name] = kmeans.predict(validate[col_list])
+        test[col_name] = kmeans.predict(test[col_list])
+        
+    
+    return train, validate, test, kmeans
+
+
+
+######################### WRANGLE PART 2, to use after exploring #########################
+
+def wrangle_pt2(df):
+    '''
+    Second part of the wrangle function. takes in Zillow dataframe, 
+    outputs train validate and test, ready to be split into X_ and y_ dataframes
+    Does the train validate test split, makes the cluster_locationprice
+    drops uneeded columns. and creates dummy column for cat variables
+    returns train validate and test and a scaler
+    '''
+    # define uneeded cols (maybe move this to the first part of wrangle)
+    unneeded_cols = ['parcelid', 'fips', 'propertycountylandusecode',
+                     'propertylandusedesc','rawcensustractandblock', 'roomcnt','yearbuilt', 
+                     'censustractandblock', 'logerror', 'transactiondate']
+    # drop unneeded cols
+    df = df.drop(columns = unneeded_cols)
+    
+    # split data
+    train, validate, test = banana_split(df)
+    
+    # define variables for target, continous variables and categorical variables
+    target = 'abs_logerror'
+    
+    cont_vars = ['bathroomcnt', 'bedroomcnt', 'calculatedfinishedsquarefeet', 'latitude', 
+             'longitude', 'propertylandusetypeid', 'structuretaxvaluedollarcnt', 
+             'landtaxvaluedollarcnt', 'ppsqft', 'tax_rate']
+    
+    cat_vars = ['yearbuilt_bins', 'county', 'clusters_locationprice']
+    
+    # make list for columsn to use in the cluster
+    cols_for_cluster = ['latitude', 'longitude', 'ppsqft']
+    
+    #scale the columns 
+    train, validate, test, scaler = my_scaler2(train, validate, test, cont_vars, MinMaxScaler())
+    
+    #use the columns above to creat the location price cluster, k = 8
+    train, validate, test, kmeans = make_this_cluster(train, validate, test, cols_for_cluster, 8, 
+                                                      col_name = ['clusters_locationprice'])
+    
+    # use function to get dummies added to dataframes
+    train, validate, test = get_zillow_dummies(train, validate, test)
+    
+    return train, validate, test, scaler
+
+#########################
