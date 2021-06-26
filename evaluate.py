@@ -129,7 +129,7 @@ def compare_to_basline(df, actuals, model_name, baseline = 'baseline'):
     print(f'''------- {name} ---------\n
 RMSE for {model_name}: {rmse}\n
 RMSE for baseline: {rmse_b}\n
-Better than baseline?: {rmse < rmse_b}
+Better than baseline?: {rmse < rmse_b} by {rmse_b - rmse}
         ''')
 ################################################################################################
 
