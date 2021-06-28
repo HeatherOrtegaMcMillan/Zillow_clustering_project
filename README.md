@@ -61,9 +61,9 @@ For this project the target is `logerror`. I have an engineered feature called `
 <hr style="border-top: 10px groove #1277e1; margin-top: 1px; margin-bottom: 1px"></hr>
 
 ## Plan and Process
-- Trello Board (insert link here)
-- Outline 
-- 
+- [Trello Board](https://trello.com/b/9EmzDpkc/zillow-clustering-project)
+- Outline Story 
+- Use readme to help gather information
 
 ### Process
 
@@ -124,7 +124,7 @@ Explore --> Clustering --> **Statistical Testing**
     - I also scaled my data using a Min Max Scaler 
 - I looked at the relationship between age and absolute logerror, in several ways (using the yearbuilt bins and using the continuous variable age)
 - I looked at whether cluster 6's mean absolute log error different from the population as a whole
-- For more details on my statistical testing see my Final Notebook(PUT LINK HERE)
+- For more details on my statistical testing see my [Final Notebook](https://github.com/HeatherOrtegaMcMillan/Zillow_clustering_project/blob/master/final_notebook.ipynb)
 
 Plan -> Acquire -> Prepare -> Explore -> ✅ **Model & Evaluate** -> Deliver
 - I decided, because the distribution of the target (logerror) was normal-ish, to use OLM and Lasso Lars models 
@@ -134,10 +134,12 @@ Plan -> Acquire -> Prepare -> Explore -> ✅ **Model & Evaluate** -> Deliver
         - Is it better than the baseline? - YES by 0.001 (RMSE) on seen and unseen data
     - Try groupings of models based on age by dividing data up (old and new houses) and creating separate models for each
         - Do these models perform better than the baseline? Or better than the generic model from before? - They do perform better than baseline, but not notably better than the first models. Also, they were kind of a pain to make.
+- I chose the Linear Regression Model using all the features to run on my test set.
+    - While it did out perform the baseline none of the models did so by very much
 
 
 Plan -> Acquire -> Prepare -> Explore -> Model & Evaluate -> ✅ **Deliver**
-- The final notebook was created for the walk through presentation and is structured for that purpose
+- The [final notebook](https://github.com/HeatherOrtegaMcMillan/Zillow_clustering_project/blob/master/final_notebook.ipynb) was created for the walk through presentation and is structured for that purpose
 - This README was fleshed out extensively
 - All modules used are located in this repo
 
