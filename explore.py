@@ -3,6 +3,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.cluster import KMeans 
 
 #####################
 
@@ -22,17 +23,18 @@ def plot_variable_dist(df, figsize = (3,2)):
             print(f'Number of Nulls: {df[col].isnull().sum()}')
 
 
-#####################
+##################### plot boxplots
 
 def plot_boxes(df, figsize = (4,2)):
     '''
     This function is for exploring. Takes in a dataframe with variables you would like to see the box plot of.
     Input the dataframe (either fully, or using .drop) with ONLY the columns you want to see plotted.
     Will skip over object columns automatically.
-    Optional arguement figsize. Default it's small.    
+    Optional argument figsize. Default it's small.    
     '''
-
+    # loop through the columns in the dataframe entered
     for col in list(df):
+        # check to see if col is numeric
         if df[col].dtypes != object: 
             plt.figure(figsize=figsize)
             sns.boxplot(data = df, x = col)
@@ -41,9 +43,7 @@ def plot_boxes(df, figsize = (4,2)):
         else:
             print(f'{col} is an object type')
 
-
-
-#####################
+##################### plot variables against a the target
 
 def plot_against_target(df, target, var_list, figsize = (10,5), hue = None):
     '''
@@ -55,10 +55,7 @@ def plot_against_target(df, target, var_list, figsize = (10,5), hue = None):
                     line_kws={'color': 'orange'})
         plt.show()
 
-
-
-
-#####################
+##################### A scaler for exploring
 
 
 def scale_this(X_df, scalertype):
@@ -105,7 +102,7 @@ def makin_clusters(X_df, k, col_name = None ):
     
     return X_df, centroids_scaled, kmeans
 
-#####################
+##################### Plot clusters
 
 def plot_clusters(x ,y, cluster_col_name, df , kmeans, scaler, centroids):
     
@@ -113,15 +110,18 @@ def plot_clusters(x ,y, cluster_col_name, df , kmeans, scaler, centroids):
     function create_cluster and creates a plot"""
     # set palette to zillow colors
     zpalette = ['#1277e1', '#f3ad35', '#0b449c', '#5289e4', '#c3eafb']
-    
+
+    # set figsize
     plt.figure(figsize=(10, 6))
     
+    # scatterplot the clusters 
     sns.scatterplot(x = x, y = y, data = df, hue = cluster_col_name, cmap = zpalette)
     
+    # plot the centroids as Xs
     centroids.plot.scatter(y=y, x= x, ax=plt.gca(), alpha=.60, s=500, c='black', marker = 'x')
 
 
-#####################
+##################### Inertia plotter
 
 def plot_inertia(X_df, k_range_start = 2, k_range_end = 10):
     '''
@@ -139,22 +139,3 @@ def plot_inertia(X_df, k_range_start = 2, k_range_end = 10):
 
 #####################
 
-
-
-
-#####################
-
-
-
-
-#####################
-
-
-
-
-#####################
-
-
-
-
-#####################

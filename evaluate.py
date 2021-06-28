@@ -82,7 +82,7 @@ def compare_rmse(df_pred_actuals):
 ################################################################################################
 
 # this function has some issues 
-def regression_modeler_for_validating(X_cols, cols, train, validate, model= LinearRegression(), model_name = 'model'):
+def regression_modeler_for_validating(X_cols, y_col, train, validate, model= LinearRegression(), model_name = 'model'):
     '''
     This function creates regression model 
     Takes in X_train, y_train, the model with the parameters you want (default is LinearRegression())
@@ -103,22 +103,49 @@ def regression_modeler_for_validating(X_cols, cols, train, validate, model= Line
     
     # compare the RMSEs (this function prints out RMSE comparisons 
     compare_rmse([('train', train[model_name], train[y_col]), ('validate', validate[model_name], validate[y_col])])
+
+################################################################################################
+
+def regression_modeler_for_TEST(X_cols, y_col, train, validate, test, model= LinearRegression(), model_name = 'model'):
+    '''
+    This function creates regression model 
+    Takes in X_train, y_train, the model with the parameters you want (default is LinearRegression())
+    The name of your model as a string (for naming your column)
+    '''
     
+    #fit model
+    model.fit(train[X_cols], train[y_col])
+    
+    #put predictions in train dataframe
+    train[model_name] = model.predict(train[X_cols])
+    
+    #put predictions in validate dataframe
+    validate[model_name] = model.predict(validate[X_cols])
+    
+    test[model_name] = model.predict(test[X_cols])
+    
+    #print confirmation instead of returning something
+    print(f'{model_name} has been created and added to train and validate dataframes\n')
+    
+    # compare the RMSEs (this function prints out RMSE comparisons 
+    compare_rmse([('train', train[model_name], train[y_col]), ('validate', validate[model_name], validate[y_col])]) 
+
 ################################################################################################
     
-def compare_to_basline(df, actuals, model_name, baseline = 'baseline'):
+def compare_to_basline(df, actuals, model_name, df_name, baseline = 'baseline'):
     '''
     this function takes in a dataframe (i.e. train)
     the actuals (i.e. y_train)
     the name of the column where your model's predictions are in the dataframe
+    df_name = name of dataframe as string
     baseline = name of the column where your baseline predictions are stored, 
     default is 'baseline'
     function prints out the RMSE for the df predictions, baseline, and whether or not 
     it is better than the baseline
     '''
-    # get name of dataframe entered
-    name =[x for x in globals() if globals()[x] is df][0]
-    
+    # get name of dataframe entered --> Broken need to fix <----- 
+    # name =[x for x in globals() if globals()[x] is df][0]
+
     # calculate model RMSE
     rmse = mean_squared_error(df[model_name], actuals, squared = False)
     
@@ -126,7 +153,7 @@ def compare_to_basline(df, actuals, model_name, baseline = 'baseline'):
     rmse_b = mean_squared_error(df[baseline], actuals, squared = False)
     
     # print it all out
-    print(f'''------- {name} ---------\n
+    print(f'''------- {df_name} ---------\n
 RMSE for {model_name}: {rmse}\n
 RMSE for baseline: {rmse_b}\n
 Better than baseline?: {rmse < rmse_b} by {rmse_b - rmse}
@@ -195,12 +222,3 @@ def plot_residuals(df, x_list, palette = "tab10"):
     plt.show()
 
 #####################################Compare RMSE function##########################################
-
-def compare_rmse(pred_actuals):
-    '''
-    This function takes in a list of tuples ex [(df.pred1, df.actuals), (df.pred2, y_validate)]
-    unpacks the tuple, and prints out the Root Mean Squared Error for each 
-    '''
-    for prediction, actual in pred_actuals:
-        rmse = mean_squared_error(prediction, actual, squared = False)
-        print(f'RMSE for {prediction.name}: {rmse} ')

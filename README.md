@@ -72,7 +72,7 @@ For this project the target is `logerror`. I have an engineered feature called `
 - Create [Trello board](https://trello.com/b/9EmzDpkc/zillow-clustering-project)
 - Outline Story for Presentation
 - Think about and establish overarching question that needed to be answered
-- Look at other work I had done with the Zillow Dataset to see what I alreayd had
+- Look at other work I had done with the Zillow Dataset to see what I already had
 
 Plan -> ✅ **Acquire** -> Prepare -> Explore -> Model & Evaluate -> Deliver
 - Since I already had some work with Zillow dataset under my belt, I tweaked the acquire

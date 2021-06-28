@@ -11,6 +11,8 @@ import seaborn as sns
 
 import scipy.stats as stats
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler, MinMaxScaler
+from sklearn.cluster import KMeans 
 
 # defining some functions to make it easier. will go in Wrangle function
 from env import host, password, user
@@ -186,10 +188,10 @@ def drop_missing(df, min_col_percent= 0.65, min_row_percent = 0.85):
     The minimum col percent is how many null values you would like to have in your columns for them to stay
     min_row_percent will be how many values must be not null in order to keep that row
     '''
-    # calculate columns threshold (any columsn that have more nulls than this, dropped)
+    # calculate columns threshold (any columns that have more nulls than this, dropped)
     col_thresh = int(round(min_col_percent*df.shape[0]))
     
-    # drop coulmns 
+    # drop columns 
     df = df.dropna(axis=1, thresh=col_thresh)
     
     # calculate row threshold 
@@ -324,7 +326,8 @@ def drop_unneeded_cols(df, unneeded_cols = ['lotsizesquarefeet', 'regionidcity',
 
 def drop_rows_low_percent(df):
     '''
-    Finds columns with missing values less than 1 percent. Drops all rows with missing values in those rows.
+    Finds columns with missing values less than 1 percent. 
+    Drops all rows with missing values in those rows.
     '''
     
     has_percent_below_one = ((df.isnull().sum() / df.shape[0]) < .01)
@@ -566,7 +569,7 @@ def make_this_cluster(train, validate, test, col_list, k, col_name = None):
 
 ######################### WRANGLE PART 2, to use after exploring #########################
 
-def wrangle_pt2(df):
+def wrangle_pt2():
     '''
     Second part of the wrangle function. takes in Zillow dataframe, 
     outputs train validate and test, ready to be split into X_ and y_ dataframes
@@ -574,10 +577,14 @@ def wrangle_pt2(df):
     drops uneeded columns. and creates dummy column for cat variables
     returns train validate and test and a scaler
     '''
+
     # define uneeded cols (maybe move this to the first part of wrangle)
     unneeded_cols = ['parcelid', 'fips', 'propertycountylandusecode',
                      'propertylandusedesc','rawcensustractandblock', 'roomcnt','yearbuilt', 
                      'censustractandblock', 'logerror', 'transactiondate']
+    # get data from wrangle part 1
+    df = wrangle_zillow()
+
     # drop unneeded cols
     df = df.drop(columns = unneeded_cols)
     
